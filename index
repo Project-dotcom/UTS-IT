@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>UTS Informatika</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root {
+  --bg: #f5f7f8;
+  --card: #ffffff;
+  --fg: #1d2429;
+  --muted: #66727c;
+  --line: #e2e7ea;
+  --soft: #eef2f4;
+  --accent: #2c5f7f;
+  --accent-fg: #ffffff;
+  --warn: #b3402c;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111518; --card: #182025; --fg: #e6ebee; --muted: #8e9ba5;
+    --line: #28323a; --soft: #1f2a31; --accent: #7fb3d5; --accent-fg: #0e1a22; --warn: #f0917c;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111518; --card: #182025; --fg: #e6ebee; --muted: #8e9ba5;
+  --line: #28323a; --soft: #1f2a31; --accent: #7fb3d5; --accent-fg: #0e1a22; --warn: #f0917c;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+button, input { font: inherit; color: inherit; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Tombol */
+.btn {
+  border: 1px solid var(--line); background: var(--card); color: var(--fg);
+  padding: 3px 11px; border-radius: 7px; cursor: pointer; font-weight: 500; font-size: 13px;
+  transition: background .15s;
+}
+.btn:hover:not(:disabled) { background: var(--soft); }
+.btn:disabled { opacity: .35; cursor: default; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.btn.primary:hover:not(:disabled) { background: var(--accent); filter: brightness(1.1); }
+
+/* Layout: layar dipakai sebanyak mungkin untuk soal */
+.app { display: flex; flex-direction: column; }
+@media (min-width: 861px) { .app { height: 100dvh; } }
+
+/* Bar atas tipis */
+.bar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10;
+  background: var(--card); border-bottom: 1px solid var(--line);
+}
+.bar-in {
+  padding: 4px 14px; display: flex; align-items: center; justify-content: space-between;
+  gap: 4px 16px; flex-wrap: wrap;
+}
+.bar-title { font-weight: 600; font-size: 14px; }
+.bar-right { display: flex; align-items: center; gap: 4px 18px; flex-wrap: wrap; }
+.grp { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+.grp .lbl { color: var(--muted); }
+.grp .val { min-width: 58px; text-align: center; font-variant-numeric: tabular-nums; font-weight: 500; }
+.chk { display: flex; align-items: center; gap: 5px; font-size: 13px; cursor: pointer; }
+
+/* Dua bagian */
+.grid {
+  flex: 1; min-height: 0; padding: 8px 10px 10px;
+  display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: minmax(0, 1fr); gap: 10px;
+}
+@media (max-width: 860px) { .grid { grid-template-columns: 1fr; grid-template-rows: none; padding: 10px; gap: 12px; } }
+.panel {
+  background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+  display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden;
+}
+.panel.ended { border-color: var(--warn); }
+
+/* Kepala bagian + timer dalam satu baris */
+.panel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 4px 12px; flex-wrap: wrap; padding: 6px 14px;
+}
+.ph-left { display: flex; align-items: baseline; gap: 10px; }
+.ph-left h2 { margin: 0; font-size: 16px; font-weight: 600; }
+.ph-left span { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.ph-right { display: flex; align-items: center; gap: 6px; }
+.time {
+  font-size: 26px; font-weight: 600; line-height: 1.1; margin-right: 6px;
+  font-variant-numeric: tabular-nums; letter-spacing: 0.01em;
+}
+.time.low { color: var(--warn); }
+.tbar { height: 3px; background: var(--soft); }
+.tbar i { display: block; height: 100%; width: 100%; background: var(--accent); transition: width .3s linear; }
+.tbar.low i { background: var(--warn); }
+
+/* Soal: ukuran huruf diatur otomatis lewat JS agar mengisi ruang */
+.panel-body { flex: 1; min-height: 0; overflow-y: auto; padding: 12px 18px; font-size: 22px; line-height: 1.5; }
+@media (max-width: 860px) { .panel-body { overflow: visible; } }
+.panel-body p { margin: 0 0 0.6em; }
+.panel-body p.task { padding-left: 0.6em; border-left: 4px solid var(--accent); }
+.panel-body p.sub { padding-left: 0.2em; margin-bottom: 0.4em; }
+.tablewrap { overflow-x: auto; margin: 0 0 0.7em; }
+table { border-collapse: collapse; width: 100%; font-size: 0.92em; }
+th, td { border: 1px solid var(--line); padding: 0.2em 0.6em; text-align: left; vertical-align: top; }
+th { background: var(--soft); font-weight: 600; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Navigasi tipis */
+.panel-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+  padding: 5px 14px; border-top: 1px solid var(--line);
+}
+.dots { display: flex; gap: 4px; flex-wrap: wrap; }
+.dot {
+  width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--line);
+  background: transparent; cursor: pointer; font-size: 12px; color: var(--muted);
+  font-variant-numeric: tabular-nums; padding: 0;
+}
+.dot:hover { background: var(--soft); }
+.dot.on { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.row { display: flex; gap: 6px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="bar">
+    <div class="bar-in">
+      <span class="bar-title">UTS Informatika</span>
+      <div class="bar-right">
+        <div class="grp">
+          <span class="lbl">Waktu per soal</span>
+          <button id="minDown" class="btn sm" aria-label="Kurangi waktu per soal">−</button>
+          <span id="minVal" class="val">5 menit</span>
+          <button id="minUp" class="btn sm" aria-label="Tambah waktu per soal">+</button>
+        </div>
+        <label class="chk"><input type="checkbox" id="snd"> Bunyi saat waktu habis</label>
+        <button id="fullBtn" class="btn sm" hidden>Layar penuh</button>
+      </div>
+    </div>
+  </header>
+  <main class="grid">
+    <article class="panel" id="panelA"></article>
+    <article class="panel" id="panelB"></article>
+  </main>
+</div>
+
+<script>
+/* ===== Soal (teks sesuai dokumen asli) =====
+   String = paragraf. {s} = butir a/b/c. {t: [...]} = tabel, baris pertama header. */
+const BAGIAN_A = [
+  [
+    "Setiap hari Senin pagi, lantai kelas X2 selalu lebih kotor dibanding hari-hari lain, padahal jadwal piket kebersihan tetap sama sepanjang minggu.",
+    "Wali kelas penasaran dan mengamati selama tiga minggu berturut-turut. Ternyata, setiap Sabtu sore ada pedagang kaki lima musiman yang berjualan tepat di depan gerbang sekolah, dan banyak siswa membeli jajanan sepulang sekolah lalu meninggalkan bungkusnya di kelas menjelang akhir pekan.",
+    "Tugas: Jelaskan apa yang dimaksud dengan pengenalan pola (pattern recognition), dan pola apa yang berhasil ditemukan wali kelas dari pengamatannya selama tiga minggu tersebut."
+  ],
+  [
+    "Wali kelas X1 mengumpulkan dua catatan tentang siswanya.",
+    "Tabel A hasil pengukuran berat badan lima siswa, yang ditimbang langsung oleh wali kelas sendiri di kelas:",
+    { t: [["Nama Siswa", "Berat Badan (kg)"], ["Sinta", "455"], ["Budi", "523"], ["Made", "487"], ["Nadia", "501"], ["Dimas", "556"]] },
+    "Tentukan Tabel A termasuk data primer atau data sekunder, lalu jelaskan alasanmu!"
+  ],
+  [
+    "Kak Rian, penjaga Kantin Kejujuran, mencatat penjualan setiap hari selama seminggu.",
+    "Dari catatan itu, ia menyusun sebuah laporan singkat untuk Kepala Sekolah: “Jajanan paling laris minggu ini adalah keripik singkong, dengan rata-rata 40 bungkus terjual per hari.”",
+    "Tugas: Jelaskan apa yang dimaksud dengan informasi dan bagaimana informasi berbeda dari data. Sebutkan mana bagian dari cerita di atas yang merupakan data mentah, dan mana yang sudah menjadi informasi."
+  ],
+  [
+    "Perpustakaan sekolah memiliki dua rak. Rak A disusun rapi berdasarkan abjad judul buku. Rak B dibiarkan acak karena buku diletakkan asal setelah dikembalikan siswa. Suatu hari, dua siswa mencari judul buku yang sama secara bersamaan — satu mencari di Rak A, satu lagi di Rak B.",
+    "Tugas: Jelaskan mengapa susunan buku yang sudah diurutkan seperti pada Rak A akan memudahkan proses pencarian dibandingkan susunan pada Rak B yang belum diurutkan. Kaitkan jawabanmu dengan alasan mengapa proses pengurutan (sorting) data itu penting dilakukan."
+  ],
+  [
+    "Tabel B nilai Matematika semester lalu tiga siswa kelas X1, yang disalin wali kelas dari arsip nilai milik guru Matematika:",
+    { t: [["Nama Siswa", "Nilai Matematika"],
+          ["Sinta", "82"],
+          ["Budi", "75"],
+          ["Made", "88"]] },
+    "Tentukan Tabel B termasuk data primer atau data sekunder, lalu jelaskan alasanmu!"
+  ],
+  [
+    "Ketua kelas mendapat tugas menyiapkan seluruh rangkaian acara class meeting akhir semester dalam waktu dua minggu. Awalnya ia kebingungan karena pekerjaan itu terasa sangat banyak dan rumit jika dikerjakan sekaligus sendirian. Ia kemudian membagi pekerjaan besar tersebut menjadi beberapa bagian yang lebih kecil dan membagikannya ke teman-teman sekelas: ada yang mengurus perlengkapan lomba, ada yang mengurus dekorasi kelas, ada yang mengurus konsumsi, dan ada yang mengurus dokumentasi kegiatan.",
+    "Tugas: Berdasarkan cara ketua kelas menyelesaikan tugasnya di atas, termasuk fondasi yang mana langkah tersebut? Lalu jelaskan alasanmu berdasarkan ciri-ciri fondasi itu."
+  ],
+  [
+    "Saat latihan baris-berbaris, guru olahraga meminta siswa berbaris berdasarkan tinggi badan, dari yang terpendek ke yang tertinggi. Guru memanggil siswa satu per satu, dan setiap siswa yang baru dipanggil harus langsung menyisipkan dirinya ke posisi yang tepat di antara barisan yang sudah ada, sehingga barisan selalu dalam keadaan terurut setiap kali ada siswa baru yang masuk.",
+    "Tugas: Diberikan tinggi badan siswa yang dipanggil berurutan (dalam cm): 158, 149, 165, 152, 160. Telusuri proses penyusunan barisan ini seperti cara kerja insertion sort, langkah demi langkah. Tuliskan susunan barisan setelah setiap siswa baru menyisipkan diri, hingga seluruh siswa berbaris terurut dari terpendek ke tertinggi."
+  ],
+  [
+    "Di meja guru terdapat tumpukan buku tugas yang dikumpulkan siswa.",
+    { t: [["Waktu", "Nama", "Aksi", "Buku"],
+          ["7.15", "Dila", "Push", "Buku Dila"],
+          ["7.16", "Farhan", "Push", "Buku Farhan"],
+          ["7.18", "Wulan", "Push", "Buku Wulan"],
+          ["7.2", "Guru", "Pop", "?"],
+          ["7.22", "Reza", "Push", "Buku Reza"],
+          ["7.25", "Guru", "Pop", "Buku Reza"]] },
+    { s: "a) Pada baris 07.20 (Guru mengambil buku), buku siapa yang seharusnya terambil sesuai aturan tumpukan (stack/LIFO)? Jelaskan alasanmu." },
+    { s: "b) Setelah seluruh proses di atas selesai, buku siapa saja yang masih tersisa di tumpukan? Sebutkan urutannya dari paling atas ke paling bawah." }
+  ],
+  [
+    "Di kelas, presentasi kelompok dilakukan sesuai urutan pendaftaran giliran maju di papan tulis.",
+    { t: [["Waktu", "Aksi", "Kelompok"],
+          ["7", "Enqueue", "Kelompok 1"],
+          ["7.02", "Enqueue", "Kelompok 3"],
+          ["7.05", "Dequeue", "Kelompok 1"],
+          ["7.1", "Enqueue", "Kelompok 2"],
+          ["7.15", "Dequeue", "Kelompok 2"]] },
+    { s: "a) Berdasarkan urutan pendaftaran, kelompok mana yang seharusnya presentasi pada pukul 07.15 menurut prinsip antrean (FIFO)? Jelaskan alasanmu." },
+    { s: "b) Menurut catatan di atas, kelompok manakah yang sebenarnya dipanggil pada pukul 07.15, padahal urutan itu melanggar aturan antrean?" }
+  ],
+  [
+    "Panitia lomba lari 100 meter mencatat waktu tempuh lima peserta (dalam detik): 15.2, 13.8, 16.0, 14.5, 13.1.",
+    "Panitia ingin mengurutkan dari yang tercepat ke yang terlambat dengan cara: selalu mencari waktu tercepat dari sisa data, lalu memindahkannya ke urutan depan.",
+    { s: "a) Telusuri proses menggunakan selection sort." },
+    { s: "b) Berapa kali proses pembandingan dan penukaran (swap) yang terjadi selama proses tersebut?" },
+    { s: "c) Bandingkan cara kerja selection sort ini dengan insertion sort pada Soal 6 — apa perbedaan mendasar strategi keduanya dalam mengurutkan data?" }
+  ]
+];
+
+const BAGIAN_B = [
+  [
+    "Guru Matematika memanggil nilai ulangan siswa satu per satu untuk dicatat di papan ranking sementara, dari nilai terendah ke nilai tertinggi.",
+    "Setiap nilai yang baru dipanggil harus langsung disisipkan ke posisi yang tepat di antara nilai-nilai yang sudah ada, sehingga daftar selalu dalam keadaan terurut setiap kali ada nilai baru yang masuk.",
+    "Tugas: Diberikan nilai ulangan siswa yang dipanggil berurutan: 78, 65, 85, 70, 90. Telusuri proses penyusunan daftar ini seperti cara kerja insertion sort, langkah demi langkah. Tuliskan susunan daftar setelah setiap nilai baru disisipkan, hingga seluruh nilai tersusun terurut dari terendah ke tertinggi."
+  ],
+  [
+    "Di dapur Kantin Kejujuran, piring kotor bekas siswa makan ditumpuk di bak cuci.",
+    { t: [["Waktu", "Nama", "Aksi", "Piring"],
+          ["10:00", "Andi", "Push", "Piring Andi"],
+          ["10:02", "Bella", "Push", "Piring Bella"],
+          ["10:05", "Citra", "Push", "Piring Citra"],
+          ["10:08", "Petugas", "Pop", "?"],
+          ["10:12", "Deni", "Push", "Piring Deni"],
+          ["10:15", "Petugas", "Pop", "Piring Deni"]] },
+    { s: "a) Pada baris 10.08, piring siapa yang seharusnya terambil sesuai aturan tumpukan? Jelaskan alasanmu." },
+    { s: "b) Setelah seluruh proses di atas selesai, piring siapa saja yang masih tersisa di tumpukan? Sebutkan urutannya dari paling atas ke paling bawah." }
+  ],
+  [
+    "Ruang tata usaha memiliki dua lemari arsip. Lemari A disusun rapi berdasarkan nomor induk siswa (NIS), dari yang terkecil ke terbesar.",
+    "Lemari B dibiarkan acak karena berkas diletakkan asal setelah selesai diperiksa. Suatu hari, dua orang staf mencari berkas siswa dengan NIS yang sama secara bersamaan — satu mencari di Lemari A, satu lagi di Lemari B.",
+    "Tugas: Jelaskan mengapa susunan berkas yang sudah diurutkan seperti pada Lemari A akan memudahkan proses pencarian dibandingkan susunan pada Lemari B yang belum diurutkan. Kaitkan jawabanmu dengan alasan mengapa proses pengurutan (sorting) data itu penting dilakukan."
+  ],
+  [
+    "Setiap hari Jumat, es krim di Kantin Kejujuran selalu habis terjual sebelum jam istirahat kedua, padahal stok yang disiapkan sama setiap hari. Penjaga kantin penasaran dan mengamati selama tiga minggu berturut-turut. Ternyata, setiap Jumat pagi ada jadwal pelajaran olahraga untuk hampir seluruh kelas, sehingga banyak siswa merasa kepanasan dan haus begitu jam istirahat pertama tiba, lalu langsung memborong es krim lebih awal dari biasanya.",
+    "Tugas: Jelaskan apa yang dimaksud dengan pengenalan pola (pattern recognition), dan pola apa yang berhasil ditemukan penjaga kantin dari pengamatannya selama tiga minggu tersebut."
+  ],
+  [
+    "Kelas yang mendaftar lebih dulu seharusnya difotokopi lebih dulu (prinsip antrean/queue). Namun, staf tata usaha mencatat kejanggalan pada urutan fotokopi yang sebenarnya terjadi.",
+    { t: [["Waktu", "Aksi", "Kelas"],
+          ["07:30", "Enqueue", "Kelas X1"],
+          ["07:33", "Enqueue", "Kelas X3"],
+          ["07:36", "Dequeue", "Kelas X1"],
+          ["07:40", "Enqueue", "Kelas X2"],
+          ["07:44", "Dequeue", "Kelas X2"]] },
+    { s: "a) Berdasarkan urutan pendaftaran, kelas mana yang seharusnya difotokopi pada pukul 07.44 menurut prinsip antrean (FIFO)? Jelaskan alasanmu." },
+    { s: "b) Menurut catatan di atas, kelas manakah yang sebenarnya dipanggil pada pukul 07.44, padahal urutan itu melanggar aturan antrean?" }
+  ],
+  [
+    "Panitia lomba lari 400 meter mencatat waktu tempuh lima peserta (dalam detik): 72.5, 68.3, 75.1, 69.8, 66.2.",
+    "Panitia ingin mengurutkan dari yang tercepat ke yang terlambat dengan cara: selalu mencari waktu tercepat dari sisa data, lalu memindahkannya ke urutan depan.",
+    { s: "a) Telusuri proses menggunakan selection sort." },
+    { s: "b) Berapa kali proses pembandingan dan penukaran (swap) yang terjadi selama proses tersebut?" },
+    { s: "c) Bandingkan cara kerja selection sort ini dengan insertion sort pada Soal 4 — apa perbedaan mendasar strategi keduanya dalam mengurutkan data?" }
+  ],
+  [
+    "Ketua OSIS mendapat tugas menyiapkan seluruh rangkaian acara peringatan Hari Kemerdekaan di sekolah dalam waktu satu minggu. Awalnya ia kebingungan karena pekerjaan itu terasa sangat banyak dan rumit jika dikerjakan sekaligus sendirian.",
+    "Ia kemudian membagi pekerjaan besar tersebut menjadi beberapa bagian yang lebih kecil dan membagikannya ke pengurus OSIS lainnya: ada yang mengurus upacara bendera, ada yang mengurus lomba-lomba, ada yang mengurus dekorasi sekolah, dan ada yang mengurus dokumentasi kegiatan.",
+    "Tugas: Berdasarkan cara ketua OSIS menyelesaikan tugasnya di atas, termasuk fondasi yang mana langkah tersebut? Lalu jelaskan alasanmu berdasarkan ciri-ciri fondasi itu."
+  ],
+  [
+    "Pembina OSIS mengumpulkan dua catatan tentang siswa kelas X2 terkait kegiatan ekstrakurikuler.",
+    "Tabel A hasil pengukuran tinggi badan lima siswa anggota ekstrakurikuler basket, yang diukur langsung oleh Pembina OSIS sendiri:",
+    { t: [["Nama Siswa", "Tinggi Badan (cm)"], ["Raka", "1,654"], ["Salma", "1,582"], ["Fajar", "1,708"], ["Wulan", "1,605"], ["Ilham", "1,721"]] },
+    "Tentukan Tabel A termasuk data primer atau data sekunder, lalu jelaskan alasanmu!"
+  ],
+  [
+    "Tabel B jumlah anggota tiga ekstrakurikuler pada tahun ajaran lalu, yang disalin Pembina OSIS dari laporan tahunan bagian kesiswaan:",
+    { t: [["Ekstrakurikuler", "Jumlah Anggota"],
+          ["Basket", "24"],
+          ["Paduan Suara", "18"],
+          ["Robotik", "15"]] },
+    "Tentukan Tabel B termasuk data primer atau data sekunder, lalu jelaskan alasanmu!"
+  ],
+  [
+    "Bu Sari, penjaga perpustakaan sekolah, mencatat jumlah peminjaman buku setiap hari selama seminggu. Dari catatan itu, ia menyusun sebuah laporan singkat untuk Kepala Sekolah: “Buku yang paling banyak dipinjam minggu ini adalah novel fiksi remaja, dengan rata-rata 12 kali dipinjam per hari.”",
+    "Tugas: Jelaskan apa yang dimaksud dengan informasi dan bagaimana informasi berbeda dari data. Sebutkan mana bagian dari cerita di atas yang merupakan data mentah, dan mana yang sudah menjadi informasi."
+  ]
+];
+
+const DATA = { A: BAGIAN_A, B: BAGIAN_B };
+const TOTAL = 10;
+const STORE = "uts-informatika-proyektor-v1";
+
+/* ===== Pengaturan (disimpan di browser) ===== */
+function load() { try { return JSON.parse(localStorage.getItem(STORE)) || {}; } catch (e) { return {}; } }
+function save() { try { localStorage.setItem(STORE, JSON.stringify(cfg)); } catch (e) {} }
+const cfg = Object.assign({ min: 5, sound: true, a: 0, b: 0 }, load());
+cfg.a = Math.min(TOTAL - 1, Math.max(0, cfg.a | 0));
+cfg.b = Math.min(TOTAL - 1, Math.max(0, cfg.b | 0));
+
+const $ = (id) => document.getElementById(id);
+function h(tag, props, ...kids) {
+  const el = document.createElement(tag);
+  if (props) for (const k in props) {
+    if (k === "class") el.className = props[k];
+    else if (k.startsWith("on")) el.addEventListener(k.slice(2), props[k]);
+    else if (k === "text") el.textContent = props[k];
+    else el.setAttribute(k, props[k]);
+  }
+  kids.flat().forEach((c) => c != null && el.append(c));
+  return el;
+}
+
+/* ===== Timer per soal (satu untuk tiap bagian) ===== */
+const mkTimer = () => ({ dur: cfg.min * 60, left: cfg.min * 60, running: false, end: 0, done: false });
+const T = { A: mkTimer(), B: mkTimer() };
+
+function cur(s) {
+  const t = T[s];
+  return t.running ? Math.max(0, Math.ceil((t.end - Date.now()) / 1000)) : t.left;
+}
+function fmt(sec) {
+  const p = (n) => String(n).padStart(2, "0");
+  return `${p(Math.floor(sec / 60))}:${p(sec % 60)}`;
+}
+function paintTimer(s) {
+  const el = $("tm-" + s);
+  if (!el) return;
+  const t = T[s], r = cur(s);
+  const low = t.done || (r <= 60 && (t.running || r < t.dur));
+  el.textContent = fmt(r);
+  el.classList.toggle("low", low);
+  $("tb-" + s).classList.toggle("low", low);
+  $("tf-" + s).style.width = (t.dur > 0 ? (r / t.dur) * 100 : 0) + "%";
+  $("panel" + s).classList.toggle("ended", t.done);
+  $("tg-" + s).textContent = t.done ? "Ulang" : t.running ? "Jeda" : r < t.dur ? "Lanjut" : "Mulai";
+}
+function toggleTimer(s) {
+  unlockAudio();
+  const t = T[s];
+  if (t.done) { T[s] = mkTimer(); }
+  else if (t.running) { t.left = cur(s); t.running = false; }
+  else if (t.left > 0) { t.end = Date.now() + t.left * 1000; t.running = true; }
+  paintTimer(s);
+}
+function resetTimer(s) { T[s] = mkTimer(); paintTimer(s); }
+function addMinute(s) {
+  const t = T[s];
+  if (t.done) { t.done = false; t.dur = 60; t.left = 60; t.running = false; }
+  else { t.dur += 60; if (t.running) t.end += 60000; else t.left += 60; }
+  paintTimer(s);
+}
+setInterval(() => {
+  ["A", "B"].forEach((s) => {
+    const t = T[s];
+    if (t.running && cur(s) <= 0) { t.running = false; t.left = 0; t.done = true; beep(); }
+    paintTimer(s);
+  });
+}, 250);
+
+/* ===== Bunyi ===== */
+let ac = null;
+function unlockAudio() {
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === "suspended") ac.resume();
+  } catch (e) {}
+}
+function beep() {
+  if (!cfg.sound || !ac) return;
+  try {
+    const now = ac.currentTime;
+    [0, 0.3, 0.6].forEach((d) => {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.frequency.value = 880;
+      g.gain.setValueAtTime(0.0001, now + d);
+      g.gain.exponentialRampToValueAtTime(0.3, now + d + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + d + 0.22);
+      o.connect(g); g.connect(ac.destination);
+      o.start(now + d); o.stop(now + d + 0.25);
+    });
+  } catch (e) {}
+}
+
+/* ===== Tampilan soal ===== */
+const isWide = () => window.matchMedia("(min-width: 861px)").matches;
+
+// Besarkan huruf sampai soal pas mengisi kotaknya (tanpa perlu digulir)
+function fit(side) {
+  const body = document.querySelector("#panel" + side + " .panel-body");
+  if (!body) return;
+  if (!isWide()) { body.style.fontSize = "20px"; return; }
+  const prevOverflow = body.style.overflowY;
+  body.style.overflowY = "hidden";
+  let lo = 16, hi = 52;
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1;
+    body.style.fontSize = mid + "px";
+    if (body.scrollHeight <= body.clientHeight + 1) lo = mid; else hi = mid;
+  }
+  body.style.fontSize = lo + "px";
+  body.style.overflowY = prevOverflow;
+}
+
+function renderPanel(side) {
+  const key = side.toLowerCase();
+  const i = cfg[key];
+  const panel = $("panel" + side);
+  panel.innerHTML = "";
+
+  const body = h("div", { class: "panel-body" });
+  DATA[side][i].forEach((b) => {
+    if (typeof b === "string") {
+      body.append(h("p", { class: b.startsWith("Tugas:") ? "task" : "", text: b }));
+    } else if (b.s) {
+      body.append(h("p", { class: "sub", text: b.s }));
+    } else if (b.t) {
+      const [head, ...rows] = b.t;
+      body.append(h("div", { class: "tablewrap" }, h("table", null,
+        h("thead", null, h("tr", null, head.map((c) => h("th", { text: c })))),
+        h("tbody", null, rows.map((r) => h("tr", null, r.map((c, ci) =>
+          h("td", { class: /^[\d,]+$/.test(c) && ci > 0 ? "num" : "", text: c })))))
+      )));
+    }
+  });
+
+  const go = (n) => {
+    cfg[key] = Math.min(TOTAL - 1, Math.max(0, n));
+    save();
+    T[side] = mkTimer();   // timer dimulai ulang untuk tiap soal
+    renderPanel(side);
+  };
+
+  const dots = h("div", { class: "dots" }, Array.from({ length: TOTAL }, (_, n) =>
+    h("button", {
+      class: "dot" + (n === i ? " on" : ""),
+      "aria-label": `Bagian ${side} soal ${n + 1}`,
+      "aria-current": n === i ? "true" : "false",
+      onclick: () => go(n),
+      text: String(n + 1)
+    })));
+  const prev = h("button", { class: "btn", onclick: () => go(i - 1), text: "Sebelumnya" });
+  const next = h("button", { class: "btn primary", onclick: () => go(i + 1), text: "Berikutnya" });
+  if (i === 0) prev.disabled = true;
+  if (i === TOTAL - 1) next.disabled = true;
+
+  panel.append(
+    h("div", { class: "panel-head" },
+      h("div", { class: "ph-left" },
+        h("h2", { text: "Bagian " + side }),
+        h("span", { text: `Soal ${i + 1} dari ${TOTAL}` })),
+      h("div", { class: "ph-right" },
+        h("div", { class: "time", id: "tm-" + side, role: "timer", text: "00:00" }),
+        h("button", { class: "btn primary", id: "tg-" + side, onclick: () => toggleTimer(side), text: "Mulai" }),
+        h("button", { class: "btn", onclick: () => resetTimer(side), text: "Ulang" }),
+        h("button", { class: "btn", onclick: () => addMinute(side), text: "+1 menit" }))),
+    h("div", { class: "tbar", id: "tb-" + side }, h("i", { id: "tf-" + side })),
+    body,
+    h("div", { class: "panel-foot" }, dots, h("div", { class: "row" }, prev, next))
+  );
+  paintTimer(side);
+  fit(side);
+}
+
+/* ===== Kontrol bar atas ===== */
+function paintMin() { $("minVal").textContent = cfg.min + " menit"; }
+function setMin(n) {
+  cfg.min = Math.min(60, Math.max(1, n));
+  save(); paintMin();
+  // timer yang belum dijalankan ikut memakai durasi baru
+  ["A", "B"].forEach((s) => {
+    const t = T[s];
+    if (!t.running && !t.done && t.left === t.dur) { T[s] = mkTimer(); paintTimer(s); }
+  });
+}
+$("minDown").addEventListener("click", () => setMin(cfg.min - 1));
+$("minUp").addEventListener("click", () => setMin(cfg.min + 1));
+$("snd").checked = !!cfg.sound;
+$("snd").addEventListener("change", (e) => { cfg.sound = e.target.checked; save(); if (cfg.sound) unlockAudio(); });
+
+if (document.fullscreenEnabled) {
+  $("fullBtn").hidden = false;
+  $("fullBtn").addEventListener("click", () => {
+    try {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else document.documentElement.requestFullscreen();
+    } catch (e) {}
+  });
+  document.addEventListener("fullscreenchange", () => {
+    $("fullBtn").textContent = document.fullscreenElement ? "Keluar layar penuh" : "Layar penuh";
+  });
+}
+
+/* ===== Mulai ===== */
+paintMin();
+renderPanel("A"); renderPanel("B");
+// ukuran huruf disesuaikan ulang saat jendela/layar berubah dan setelah font termuat
+if (window.ResizeObserver) {
+  const ro = new ResizeObserver(() => { fit("A"); fit("B"); });
+  ro.observe($("panelA")); ro.observe($("panelB"));
+} else {
+  window.addEventListener("resize", () => { fit("A"); fit("B"); });
+}
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { fit("A"); fit("B"); });
+</script>
+</body>
+</html>
